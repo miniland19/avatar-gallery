@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>아바타 이미지</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; }
+    #grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .card { border:1px solid #ddd; border-radius:12px; padding:10px; }
+    img { width:100%; height:auto; display:block; border-radius:10px; background:#f6f6f6; }
+    .name { margin-top:8px; font-size:12px; word-break: break-all; color:#333; }
+  </style>
+</head>
+<body>
+  <h1>아바타 이미지 갤러리</h1>
+  <div id="grid"></div>
+
+  <script>
+    const base = "stand1.0.default1";
+    const maxN = 103; // _1 ~ _103
+    const grid = document.getElementById("grid");
+
+    function addCard(src, label) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = label;
+      img.loading = "lazy";
+      img.onerror = () => card.remove(); // 파일 없으면 카드 제거
+
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = label;
+
+      card.appendChild(img);
+      card.appendChild(name);
+      grid.appendChild(card);
+    }
+
+    // 기본 파일
+    addCard(`images/${base}.png`, `${base}.png`);
+
+    // _1 ~ _103
+    for (let i = 1; i <= maxN; i++) {
+      addCard(`images/${base}_${i}.png`, `${base}_${i}.png`);
+    }
+  </script>
+</body>
+</html>
