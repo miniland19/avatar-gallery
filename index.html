@@ -3,50 +3,127 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>아바타 이미지</title>
+  <title>아바타 갤러리</title>
+
   <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; }
-    #grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-    .card { border:1px solid #ddd; border-radius:12px; padding:10px; }
-    img { width:100%; height:auto; display:block; border-radius:10px; background:#f6f6f6; }
-    .name { margin-top:8px; font-size:12px; word-break: break-all; color:#333; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, sans-serif;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+    }
+
+    /* 📱 모바일 최적화 포함 */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      #grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      cursor: pointer;
+    }
+
+    .card img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      display: block;
+      background: #ddd;
+    }
+
+    /* 🔍 크게 보기 오버레이 */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #overlay img {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 12px;
+      background: #000;
+    }
   </style>
 </head>
 <body>
-  <h1>아바타 이미지 갤러리</h1>
+  <h1>아바타 갤러리</h1>
+
   <div id="grid"></div>
+
+  <!-- 오버레이 -->
+  <div id="overlay">
+    <img id="overlayImg" />
+  </div>
 
   <script>
     const base = "stand1.0.default1";
-    const maxN = 103; // _1 ~ _103
+    const maxN = 103;
     const grid = document.getElementById("grid");
+    const overlay = document.getElementById("overlay");
+    const overlayImg = document.getElementById("overlayImg");
 
-    function addCard(src, label) {
+    function addImage(src) {
       const card = document.createElement("div");
       card.className = "card";
 
       const img = document.createElement("img");
       img.src = src;
-      img.alt = label;
       img.loading = "lazy";
-      img.onerror = () => card.remove(); // 파일 없으면 카드 제거
-
-      const name = document.createElement("div");
-      name.className = "name";
-      name.textContent = label;
+      img.onerror = () => card.remove();
 
       card.appendChild(img);
-      card.appendChild(name);
       grid.appendChild(card);
+
+      card.addEventListener("click", () => {
+        overlayImg.src = src;
+        overlay.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
     }
 
-    // 기본 파일
-    addCard(`images/${base}.png`, `${base}.png`);
+    // 기본 이미지
+    addImage(`images/${base}.png`);
 
     // _1 ~ _103
     for (let i = 1; i <= maxN; i++) {
-      addCard(`images/${base}_${i}.png`, `${base}_${i}.png`);
+      addImage(`images/${base}_${i}.png`);
     }
+
+    // 닫기
+    overlay.addEventListener("click", () => {
+      overlay.style.display = "none";
+      overlayImg.src = "";
+      document.body.style.overflow = "";
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        overlay.style.display = "none";
+        overlayImg.src = "";
+        document.body.style.overflow = "";
+      }
+    });
   </script>
 </body>
 </html>
