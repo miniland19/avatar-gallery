@@ -9,13 +9,11 @@
     body {
       margin: 0;
       padding: 16px;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       background: #f7f7f7;
     }
 
-    h1 {
-      margin-bottom: 16px;
-    }
+    h1 { margin-bottom: 16px; }
 
     /* 📱 모바일 최적화 포함 */
     #grid {
@@ -23,7 +21,6 @@
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 16px;
     }
-
     @media (max-width: 600px) {
       #grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -32,12 +29,16 @@
     }
 
     .card {
-      background: white;
+      background: #fff;
       border-radius: 14px;
       padding: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform .12s ease;
     }
+    .card:active { transform: scale(0.995); }
 
     .card img {
       width: 100%;
@@ -45,6 +46,16 @@
       border-radius: 12px;
       display: block;
       background: #ddd;
+    }
+
+    .name {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+      letter-spacing: 0.2px;
+      user-select: none;
     }
 
     /* 🔍 크게 보기 오버레이 */
@@ -56,14 +67,45 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding: 24px;
     }
-
-    #overlay img {
+    #overlayInner {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       max-width: 92vw;
       max-height: 92vh;
+    }
+    #overlayImg {
+      max-width: 92vw;
+      max-height: 80vh;
       border-radius: 12px;
       background: #000;
+      display: block;
     }
+    #overlayTitle {
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      text-align: center;
+      user-select: none;
+    }
+    #overlayClose {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 6px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      font-size: 13px;
+    }
+    #overlayClose:active { transform: scale(0.98); }
   </style>
 </head>
 <body>
@@ -72,57 +114,82 @@
   <div id="grid"></div>
 
   <!-- 오버레이 -->
-  <div id="overlay">
-    <img id="overlayImg" />
+  <div id="overlay" aria-hidden="true">
+    <div id="overlayInner">
+      <button id="overlayClose" type="button">닫기 ✕</button>
+      <img id="overlayImg" alt="" />
+      <div id="overlayTitle" aria-live="polite"></div>
+    </div>
   </div>
 
   <script>
     const base = "stand1.0.default1";
-    const maxN = 103;
+    const maxN = 103; // _1 ~ _103 => 총 104장
     const grid = document.getElementById("grid");
     const overlay = document.getElementById("overlay");
     const overlayImg = document.getElementById("overlayImg");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayClose = document.getElementById("overlayClose");
 
-    function addImage(src) {
+    // NO.01, NO.02 ... 두 자리로 패딩
+    const labelOf = (n) => `미니랜드 NO.${String(n).padStart(2, "0")}`;
+
+    function addImage(src, label) {
       const card = document.createElement("div");
       card.className = "card";
 
       const img = document.createElement("img");
       img.src = src;
+      img.alt = label;
       img.loading = "lazy";
       img.onerror = () => card.remove();
 
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = label;
+
       card.appendChild(img);
+      card.appendChild(name);
       grid.appendChild(card);
 
-      card.addEventListener("click", () => {
-        overlayImg.src = src;
-        overlay.style.display = "flex";
-        document.body.style.overflow = "hidden";
-      });
+      card.addEventListener("click", () => openOverlay(src, label));
     }
 
-    // 기본 이미지
-    addImage(`images/${base}.png`);
-
-    // _1 ~ _103
-    for (let i = 1; i <= maxN; i++) {
-      addImage(`images/${base}_${i}.png`);
+    function openOverlay(src, label) {
+      overlayImg.src = src;
+      overlayImg.alt = label;
+      overlayTitle.textContent = label;
+      overlay.style.display = "flex";
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
     }
 
-    // 닫기
-    overlay.addEventListener("click", () => {
+    function closeOverlay() {
       overlay.style.display = "none";
+      overlay.setAttribute("aria-hidden", "true");
       overlayImg.src = "";
+      overlayImg.alt = "";
+      overlayTitle.textContent = "";
       document.body.style.overflow = "";
-    });
+    }
 
+    // 기본 이미지 → NO.01
+    addImage(`images/${base}.png`, labelOf(1));
+
+    // _1 ~ _103 → NO.02 ~ NO.104
+    for (let i = 1; i <= maxN; i++) {
+      addImage(`images/${base}_${i}.png`, labelOf(i + 1));
+    }
+
+    // 닫기(배경 클릭, 버튼, ESC)
+    overlay.addEventListener("click", (e) => {
+      // 내부 클릭은 무시
+      const inner = document.getElementById("overlayInner");
+      if (!inner.contains(e.target)) closeOverlay();
+    });
+    overlayClose.addEventListener("click", closeOverlay);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        overlay.style.display = "none";
-        overlayImg.src = "";
-        document.body.style.overflow = "";
-      }
+      if (e.key === "Escape") closeOverlay();
     });
   </script>
 </body>
